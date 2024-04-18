@@ -13,6 +13,7 @@ export type JWTConfig = {
   secret: string;
   // 过期时间
   expireIn: string;
+  accessExpiresIn: string;
 };
 //mysql配置
 export type MySQLConfig = {

@@ -8,6 +8,17 @@ import { AUTHPROMPT } from 'src/enum/auth';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { LoginVo } from './vo/login.vo';
+import { getConfig } from 'config/configuration';
+const config = getConfig();
+const jwtConfig = config['jwt'];
+interface Payload {
+  id: number;
+  username: string;
+}
+export interface ReturnToken {
+  access_token: string;
+  refresh_token: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -17,6 +28,37 @@ export class AuthService {
   private jwtService: JwtService;
   @Inject(UserService)
   private userService: UserService;
+
+  createToken(payload: Payload): ReturnToken {
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: jwtConfig.accessExpiresIn,
+    });
+    const refresh_token = this.jwtService.sign(
+      { id: payload.id },
+      {
+        expiresIn: jwtConfig.expireIn,
+      },
+    );
+    return {
+      access_token,
+      refresh_token,
+    };
+  }
+  async refreshToken(refreshToken: string): Promise<ReturnToken> {
+    try {
+      const data = this.jwtService.verify(refreshToken);
+
+      const user = await this.userService.findOneById(data.userId);
+      const payload = { id: user.id, username: user.username };
+      const { access_token, refresh_token } = this.createToken(payload);
+      return {
+        access_token,
+        refresh_token,
+      };
+    } catch (e) {
+      throw new HttpException('11', HttpStatus.UNAUTHORIZED);
+    }
+  }
 
   async register(loginAuthDto: LoginAuthDto): Promise<string> {
     const exitUser = await this.authRepository.findOneBy({
@@ -60,10 +102,12 @@ export class AuthService {
     if (!isPassword) {
       throw new HttpException(AUTHPROMPT.PASSWORDFAIL, HttpStatus.BAD_REQUEST);
     }
-    const payload = { sub: existUser.id, username: existUser.username };
+    const payload = { id: existUser.id, username: existUser.username };
+    const { access_token, refresh_token } = this.createToken(payload);
     return {
-      userInfo: await this.userService.findOne(existUser.id),
-      access_token: await this.jwtService.signAsync(payload),
+      userInfo: await this.userService.findOneById(existUser.id),
+      access_token,
+      refresh_token,
     };
   }
 }

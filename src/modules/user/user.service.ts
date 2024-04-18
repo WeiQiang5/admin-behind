@@ -12,7 +12,7 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  async findOne(id: number) {
+  async findOneById(id: number): Promise<Omit<User, 'password'>> {
     const { password, ...userInfo } = await this.userRepository.findOneBy({
       id,
     });

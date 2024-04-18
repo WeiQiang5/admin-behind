@@ -8,8 +8,8 @@ db:
   host: "127.0.0.1"
   port: 3306
   username: "root"
-  password: "你的密码"
-  database: "你的数据库名字"
+  password: ""
+  database: ""
   synchronize: true
   logging: true
 redis:
@@ -21,5 +21,6 @@ swagger:
 jwt:
   secret: "zero"
   expireIn: '7d' #表示过期时间7天
+  accessExpiresIn: '30m'
 logger:
   level: 'debug'
