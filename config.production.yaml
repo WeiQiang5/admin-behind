@@ -1,0 +1,25 @@
+# 服务配置
+server:
+  host: "localhost"
+  port: 3000
+env:
+  NODE_ENV: "production"
+db:
+  host: "127.0.0.1"
+  port: 3306
+  username: "root"
+  password: "密码"
+  database: "nest_admin"
+  synchronize: true
+  logging: true
+redis:
+  host: "localhost"
+  port: 6379
+  enableAuth: false
+swagger:
+  enable: true
+jwt:
+  secret: "zero"
+  expireIn: '7d' #表示过期时间7天
+logger:
+  level: 'debug'
