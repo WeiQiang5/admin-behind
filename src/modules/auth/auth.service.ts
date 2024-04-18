@@ -7,6 +7,7 @@ import { compareCryption, encryption } from 'src/utils';
 import { AUTHPROMPT } from 'src/enum/auth';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
+import { LoginVo } from './vo/login.vo';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +18,7 @@ export class AuthService {
   @Inject(UserService)
   private userService: UserService;
 
-  async register(loginAuthDto: LoginAuthDto) {
+  async register(loginAuthDto: LoginAuthDto): Promise<string> {
     const exitUser = await this.authRepository.findOneBy({
       username: loginAuthDto.username,
     });
@@ -45,10 +46,13 @@ export class AuthService {
     }
   }
 
-  async login(loginAuthDto: LoginAuthDto) {
+  async login(loginAuthDto: LoginAuthDto): Promise<LoginVo> {
     const existUser = await this.authRepository.findOneBy({
       username: loginAuthDto.username,
     });
+    if (!existUser) {
+      throw new HttpException(AUTHPROMPT.USERNOTEXIST, HttpStatus.BAD_REQUEST);
+    }
     const isPassword = await compareCryption(
       loginAuthDto.password,
       existUser.password,
@@ -58,8 +62,8 @@ export class AuthService {
     }
     const payload = { sub: existUser.id, username: existUser.username };
     return {
-      access_token: await this.jwtService.signAsync(payload),
       userInfo: await this.userService.findOne(existUser.id),
+      access_token: await this.jwtService.signAsync(payload),
     };
   }
 }
